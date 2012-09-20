@@ -1,0 +1,2 @@
+gmcs -lib:~/Downloads/weka-3-7-7/,~/Downloads/ikvm-7.1.4532.2/bin/ -r:weka,IKVM.Runtime,IKVM.OpenJDK.Beans,IKVM.OpenJDK.SwingAWT,IKVM.OpenJDK.Charsets,IKVM.OpenJDK.Text,IKVM.OpenJDK.Corba,IKVM.OpenJDK.Tools,IKVM.OpenJDK.Core,IKVM.OpenJDK.Util,IKVM.OpenJDK.Jdbc,IKVM.OpenJDK.XML.API,IKVM.OpenJDK.Management,IKVM.OpenJDK.XML.Bind,IKVM.OpenJDK.Media,IKVM.OpenJDK.XML.Crypto,IKVM.OpenJDK.Misc,IKVM.OpenJDK.XML.Parse,IKVM.OpenJDK.Naming,IKVM.OpenJDK.XML.Transform,IKVM.OpenJDK.Remoting,IKVM.OpenJDK.XML.WebServices,IKVM.OpenJDK.Security,IKVM.OpenJDK.XML.XPath $1
+
