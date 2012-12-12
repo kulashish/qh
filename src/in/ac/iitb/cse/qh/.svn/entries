@@ -1,0 +1,46 @@
+10
+
+dir
+72
+svn+ssh://agam@mlir/home/agam/qhrepo/src/in/ac/iitb/cse/qh
+svn+ssh://agam@mlir/home/agam/qhrepo
+
+
+
+2012-12-11T09:54:53.969893Z
+72
+agam
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+d4937377-c149-4ee4-ac5e-ed0262570656
+
+test
+dir
+
+meta
+dir
+
+naiveBayes
+dir
+
+classifiers
+dir
+
+data
+dir
+
+util
+dir
+

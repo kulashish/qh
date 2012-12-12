@@ -1,0 +1,435 @@
+package in.ac.iitb.cse.qh.classifiers;
+
+import weka.classifiers.functions.Logistic;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.Optimization;
+import weka.core.Utils;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.NominalToBinary;
+import weka.filters.unsupervised.attribute.RemoveUseless;
+import weka.filters.unsupervised.attribute.ReplaceMissingValues;
+
+public class ModifiedLogistic extends Logistic {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * @param args
+	 */
+
+	/** The maximum number of iterations. */
+	private int m_MaxIts = -1;
+
+	protected double[] d;
+	protected double[] x; // parameters
+	protected int m_numInstances;
+
+	/** An attribute filter */
+	private RemoveUseless m_AttFilter;
+
+	/** The filter used to make attributes numeric. */
+	private NominalToBinary m_NominalToBinary;
+
+	/** The filter used to get rid of missing values. */
+	private ReplaceMissingValues m_ReplaceMissingValues;
+
+	// private double[][] m_Data;
+
+	private class OptEng extends Optimization {
+		private double[] weights;
+
+		/** Class labels of instances */
+		private int[] cls;
+
+		/**
+		 * Set the weights of instances
+		 * 
+		 * @param w
+		 *            the weights to be set
+		 */
+		public void setWeights(double[] w) {
+			weights = w;
+		}
+
+		/**
+		 * Set the class labels of instances
+		 * 
+		 * @param c
+		 *            the class labels to be set
+		 */
+		public void setClassLabels(int[] c) {
+			cls = c;
+		}
+
+		@Override
+		public String getRevision() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		protected double[] evaluateGradient(double[] par) throws Exception {
+			// TODO Auto-generated method stub
+
+			double[] gradient = new double[par.length];
+			for (int i = 0; i < par.length; i++) {
+				for (int j = 0; j < m_numInstances; j++) {
+					gradient[i] += -m_Data[j][i]
+							* (cls[j] - prob(par, m_Data[j], 1));
+				}
+				gradient[i] += d[i] * par[i];
+			}
+
+			return gradient;
+		}
+
+		@Override
+		protected double objectiveFunction(double[] par) throws Exception {
+			// TODO Auto-generated method stub
+			// sum w_i^2d_i + lossT(w)
+
+			double result = 0d;
+			for (int i = 0; i < par.length; i++) {
+				result += par[i] * par[i] * d[i];
+			}
+
+			for (int i = 0; i < m_numInstances; i++) {
+
+				double p = logprob(par, m_Data[i], cls[i]);
+				result -= p;
+			}
+			return result;
+
+		}
+
+	}
+
+	public double[] getWeights()
+	{
+		return x;
+	}
+	
+	public double[][] computeJacobian(int i) {
+
+		double[][] jac = new double[x.length][2];
+
+		double der = 0d;
+
+		for (int j = 0; j < x.length; j++) {
+			der += x[j] * m_Data[i][j];
+		}
+
+		der = Math.exp(-der);
+
+		der = (-der) / ((1 + der) * (1 + der));
+
+		for (int j = 0; j < x.length; j++) {
+			jac[j][0] = m_Data[i][j] * der;
+			jac[j][1] = m_Data[i][j] * (-der);
+		}
+
+		return jac;
+	}
+
+	public double[][] getHessian() {
+		double[][] hessian = new double[x.length][x.length];
+
+		for (int i = 0; i < x.length; i++) {
+			for (int j = 0; j < x.length; j++) {
+				hessian[i][j] = 0d;
+				System.out.println("M_data : " + m_Data);
+				for (int k = 0; k < m_Data.length; k++) {
+					double temp = 0d;
+					for (int l = 0; l < m_Data[k].length; l++) {
+						temp += x[l] * m_Data[k][l];
+					}
+					temp = Math.exp(-temp);
+					temp = (-temp) / ((1 + temp) * (1 + temp));
+
+					hessian[i][j] += m_Data[k][i] * m_Data[k][j] * temp;
+				}
+				hessian[i][j] = -hessian[i][j];
+			}
+		}
+
+		return hessian;
+	}
+
+	public double[][] getIndicator() {
+
+		double[][] B = new double[x.length][x.length];
+
+		for (int i = 0; i < x.length; i++) {
+			for (int j = 0; j < x.length; j++) {
+				B[i][j] = x[i] * Math.exp(d[j]);
+			}
+		}
+		return B;
+	}
+
+	public double[] getCovariance() {
+		return d;
+	}
+
+	private double prob(double[] par, double[] data, double cls) {
+		double p = 0d;
+		for (int i = 0; i < par.length; i++) {
+			p += par[i] * data[i];
+		}
+		if (cls == 1) {
+			return 1 / (1 + Math.exp(-p));
+		} else
+			return Math.exp(-p) / (1 + Math.exp(-p));
+	}
+
+	private double prob1(double[] par, double[] data, double cls) {
+		double p = 0d;
+		for (int i = 0; i < par.length; i++) {
+			p += par[i] * data[i];
+		}
+		return p;
+	}
+
+	private double logprob(double[] par, double[] data, double cls) {
+		double p = 0d;
+		for (int i = 0; i < par.length; i++) {
+			p += par[i] * data[i];
+		}
+		if (cls == 1) {
+			return -Math.log(1 + Math.exp(-p));
+		} else
+			return (-p - Math.log(1 + Math.exp(-p)));
+	}
+
+	/**
+	 * Computes the distribution for a given instance
+	 * 
+	 * @param instance
+	 *            the instance for which distribution is computed
+	 * @return the distribution
+	 * @throws Exception
+	 *             if the distribution can't be computed successfully
+	 */
+	public double[] distributionForInstance(Instance instance) throws Exception {
+
+		m_ReplaceMissingValues.input(instance);
+		instance = m_ReplaceMissingValues.output();
+		m_AttFilter.input(instance);
+		instance = m_AttFilter.output();
+		m_NominalToBinary.input(instance);
+		instance = m_NominalToBinary.output();
+
+		// Extract the predictor columns into an array
+		double[] instDat = new double[m_NumPredictors + 1];
+		int j = 1;
+		instDat[0] = 1;
+		for (int k = 0; k <= m_NumPredictors; k++) {
+			if (k != m_ClassIndex) {
+				instDat[j++] = instance.value(k);
+			}
+		}
+
+		double[] distribution = new double[2];
+
+		distribution[0] = prob1(x, instDat, 0);
+		distribution[1] = prob1(x, instDat, 1);
+		// distribution[0]=prob(x, instDat, 0);
+		// distribution[1]=prob(x, instDat, 1);
+		// double[] distribution = evaluateProbability(instDat);
+		return distribution;
+	}
+
+	public void setHyperparameters(double[] argd) {
+		d = argd;
+	}
+
+	public double[] getHyperparameters() {
+		return d;
+	}
+
+	@Override
+	public void buildClassifier(Instances train) throws Exception {
+		// remove instances with missing class
+		train = new Instances(train);
+		train.deleteWithMissingClass();
+
+		// Replace missing values
+		m_ReplaceMissingValues = new ReplaceMissingValues();
+		m_ReplaceMissingValues.setInputFormat(train);
+		train = Filter.useFilter(train, m_ReplaceMissingValues);
+
+		// Remove useless attributes
+		m_AttFilter = new RemoveUseless();
+		m_AttFilter.setInputFormat(train);
+		train = Filter.useFilter(train, m_AttFilter);
+
+		// Transform attributes
+		m_NominalToBinary = new NominalToBinary();
+		m_NominalToBinary.setInputFormat(train);
+		train = Filter.useFilter(train, m_NominalToBinary);
+
+		// Save the structure for printing the model
+		// m_structure = new Instances(train, 0);
+
+		// Extract data
+		m_ClassIndex = train.classIndex();
+		m_NumClasses = train.numClasses();
+		m_numInstances = train.numInstances();
+
+		int nK = m_NumClasses - 1; // Only K-1 class labels needed
+		int nR = m_NumPredictors = train.numAttributes() - 1;
+		int nC = train.numInstances();
+
+		m_Data = new double[nC][nR + 1]; // Data values
+		int[] Y = new int[nC]; // Class labels
+		double[] xMean = new double[nR + 1]; // Attribute means
+		double[] xSD = new double[nR + 1]; // Attribute stddev's
+		double[] sY = new double[nK + 1]; // Number of classes
+		double[] weights = new double[nC]; // Weights of instances
+		double totWeights = 0; // Total weights of the instances
+		// m_Par = new double[nR + 1][nK]; // Optimized parameter values
+
+		for (int i = 0; i < nC; i++) {
+			// initialize X[][]
+			Instance current = train.instance(i);
+			Y[i] = (int) current.classValue(); // Class value starts from 0
+			weights[i] = current.weight(); // Dealing with weights
+			totWeights += weights[i];
+
+			m_Data[i][0] = 1;
+			int j = 1;
+			for (int k = 0; k <= nR; k++) {
+				if (k != m_ClassIndex) {
+					double x = current.value(k);
+					m_Data[i][j] = x;
+					xMean[j] += weights[i] * x;
+					xSD[j] += weights[i] * x * x;
+					j++;
+				}
+			}
+
+			// Class count
+			sY[Y[i]]++;
+		}
+
+		if ((totWeights <= 1) && (nC > 1))
+			throw new Exception(
+					"Sum of weights of instances less than 1, please reweight!");
+
+		xMean[0] = 0; // why?
+		xSD[0] = 1; // why?
+		for (int j = 1; j <= nR; j++) {
+			xMean[j] = xMean[j] / totWeights;
+			if (totWeights > 1)
+				xSD[j] = Math.sqrt(Math.abs(xSD[j] - totWeights * xMean[j]
+						* xMean[j])
+						/ (totWeights - 1));
+			else
+				xSD[j] = 0;
+		}
+
+		if (m_Debug) {
+			// Output stats about input data
+			System.out.println("Descriptives...");
+			for (int m = 0; m <= nK; m++)
+				System.out.println(sY[m] + " cases have class " + m);
+			System.out.println("\n Variable     Avg       SD    ");
+			for (int j = 1; j <= nR; j++)
+				System.out.println(Utils.doubleToString(j, 8, 4)
+						+ Utils.doubleToString(xMean[j], 10, 4)
+						+ Utils.doubleToString(xSD[j], 10, 4));
+		}
+
+		// Normalise input data
+		for (int i = 0; i < nC; i++) {
+			// System.out.println();
+			for (int j = 0; j <= nR; j++) {
+				if (xSD[j] != 0) {
+					m_Data[i][j] = (m_Data[i][j] - xMean[j]) / xSD[j];
+					// System.out.print(m_Data[i][j]+" ");
+				}
+			}
+		}
+
+		OptEng opt = new OptEng();
+		opt.setDebug(m_Debug);
+		opt.setWeights(weights);
+		opt.setClassLabels(Y);
+
+		if (null == d) {
+			d = new double[nR + 1];
+			for (int i = 0; i <= nR; i++)
+				d[i] = 1d;
+		}
+		x = new double[(nR + 1)];
+		double[][] b = new double[2][x.length]; // Boundary constraints, N/A
+												// here
+		// Initialize
+		for (int i = 0; i <= nR; i++) {
+			x[i] = 1d / (nR + 1);
+			System.out.println(x[i]);
+			// x[i]=-Math.log(nR+1);
+			// d[i]=1;
+			b[0][i] = Double.NaN;
+			b[1][i] = Double.NaN;
+		}
+
+		System.out.println();
+
+		if (m_MaxIts == -1) { // Search until convergence
+			x = opt.findArgmin(x, b);
+			while (x == null) {
+				x = opt.getVarbValues();
+				if (m_Debug)
+					System.out.println("200 iterations finished, not enough!");
+				x = opt.findArgmin(x, b);
+			}
+			if (m_Debug)
+				System.out.println(" -------------<Converged>--------------");
+		} else {
+			opt.setMaxIteration(m_MaxIts);
+			x = opt.findArgmin(x, b);
+			if (x == null) // Not enough, but use the current value
+				x = opt.getVarbValues();
+		}
+
+		m_LL = -opt.getMinFunction(); // Log-likelihood
+
+		// Don't need data matrix anymore
+<<<<<<< .mine
+//		m_Data = null;
+=======
+		//m_Data = null;
+>>>>>>> .r41
+
+		for (int i = 0; i <= nR; i++) {
+			System.out.println(x[i]);
+		}
+
+		// Convert coefficients back to non-normalized attribute units
+		double mod2 = 0d;
+		for (int i = 0; i <= nR; i++) {
+			mod2 += x[i] * x[i];
+		}
+		for (int i = 0; i <= nR; i++) {
+			x[i] /= Math.sqrt(mod2);
+		}
+		System.out.println("||w||^2=" + mod2);
+		/*
+		 * for (int i = 0; i < nK; i++) { m_Par[0][i] = x[i * (nR + 1)]; for
+		 * (int j = 1; j <= nR; j++) { m_Par[j][i] = x[i * (nR + 1) + j]; if
+		 * (xSD[j] != 0) { m_Par[j][i] /= xSD[j]; m_Par[0][i] -= m_Par[j][i] *
+		 * xMean[j]; } } }
+		 */
+	}
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+	}
+
+}
