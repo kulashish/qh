@@ -20,7 +20,7 @@ public class ModifiedLogistic extends Logistic {
 	 */
 
 	/** The maximum number of iterations. */
-	private int m_MaxIts = 1;
+	private int m_MaxIts = 2;
 
 	protected double[] d;
 	// protected double[] x; // parameters
@@ -233,6 +233,8 @@ public class ModifiedLogistic extends Logistic {
 		double[] x = params;
 		double[][] hessian = new double[x.length][x.length];
 
+		System.out.println("Hessian calculation started...");
+		
 		for (int i = 0; i < x.length; i++) {
 			for (int j = 0; j < x.length; j++) {
 				hessian[i][j] = 0d;
@@ -241,15 +243,23 @@ public class ModifiedLogistic extends Logistic {
 					for (int l = 0; l < m_Data[k].length; l++) {
 						temp += x[l] * m_Data[k][l];
 					}
+					if(temp > MetaConstants.MAX_POWER)
+						temp = MetaConstants.MAX_POWER;
+					if(temp < -MetaConstants.MAX_POWER)
+						temp = -MetaConstants.MAX_POWER;
 					temp = Math.exp(-temp);
 					temp = (-temp) / ((1 + temp) * (1 + temp));
 
+					//if(temp == 0)
+						//System.out.println("\ntemp="+temp);
 					hessian[i][j] += m_Data[k][i] * m_Data[k][j] * temp;
 				}
 				hessian[i][j] = -hessian[i][j];
 			}
 		}
 
+		System.out.println("Hessian calculation finished!");
+		
 		return hessian;
 	}
 
@@ -399,6 +409,8 @@ public class ModifiedLogistic extends Logistic {
 			for (int n = 0; n < m_NumClasses - 1; n++)
 				sum += Math.exp(v[n] - v[m]);
 			prob[m] = 1 / (sum + Math.exp(-v[m]));
+			if(prob[m] == 0)
+				prob[m]=1.0e-20;
 		}
 
 		return prob;

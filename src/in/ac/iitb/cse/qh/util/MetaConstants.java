@@ -10,15 +10,31 @@ public interface MetaConstants {
 	public static final int MAX_OPTIM_ITERATIONS = 2;
 	//public static final String TRAIN_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split1lac.arff";
 	//public static final String TRAIN_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split1per1.arff";
-	public static final String TRAIN_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split10k-train.arff";
+	//public static final String TRAIN_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split10k-train.arff";
+	//public static final String TRAIN_FILE_PATH = "/home/agam/mtp/QuickHeal/data/split10k-train.arff";
 	//public static final String TRAIN_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split1s.arff";
-	//public static final String TRAIN_FILE_PATH ="/media/F/Acads/iitb/mtp/QuickHeal/data/split10k-test.arff";
-	//public static final String TEST_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split1s.arff";
-	//public static final String TRAIN_FILE_PATH = "/home/ashish/Documents/QuickHealRD/data/split1s.arff";
-	public static final String HOLDOUT_FILE_PATH ="/media/F/Acads/iitb/mtp/QuickHeal/data/split10k-test.arff";
+	public static final String TRAIN_FILE_PATH ="/media/F/Acads/iitb/mtp/QuickHeal/data/split10k-test.arff";
+	//public static final String TRAIN_FILE_PATH ="/home/agam/mtp/QuickHeal/data/split10k-test.arff";
+	
+	//public static final String TRAIN_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split2k.arff";
+	
+//	public static final String TRAIN_FILE_PATH = "/home/ashish/Documents/QuickHealRD/data/split10k-train.arff";
+//	public static final String HOLDOUT_FILE_PATH ="/home/ashish/Documents/QuickHealRD/data/split10k-test.arff";
+	public static final String TRAIN_FILE_PATH = "/home/ashish/Documents/wiki annotation work/10K-train-random.arff";
+	public static final String HOLDOUT_FILE_PATH ="/home/ashish/Documents/wiki annotation work/10K-test-random.arff";
+	
+	//public static final String HOLDOUT_FILE_PATH ="/media/F/Acads/iitb/mtp/QuickHeal/data/split10k-test.arff";
 	//public static final String HOLDOUT_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split10k-train.arff";
+	//public static final String HOLDOUT_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split1per1.arff";
+	//public static final String HOLDOUT_FILE_PATH = "/home/agam/mtp/QuickHeal/data/split3per.arff";
+	public static final String HOLDOUT_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split3per.arff";
+	
+	//public static final String HOLDOUT_FILE_PATH = "/media/F/Acads/iitb/mtp/QuickHeal/data/split12.arff";
+	
 	public static final String IN_FILE_PATH = "/home/agam/lr.dat";
 	public static final String NEW_FILE_PATH = "/home/agam/lr_last.dat";
+	public static final String CSTATE_FILE_PATH = "/home/agam/cstate.dat";
+	public static final String TSTATE_FILE_PATH = "/home/agam/tstate.dat";
 	public static final String OPTIMIZED_FILE_PATH = "/home/agam/optimized.dat";
 	public static final String BEAN_DIVERGENCE_CHART = "divergencechart";
 

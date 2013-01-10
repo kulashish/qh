@@ -22,6 +22,17 @@ public class ClassifierProxy {
 	private NaiveBayesParam nbClassfier;
 	private ModifiedLogistic mlrClassifier;
 
+	private Instances trainInstances;
+	private Instances holdoutInstances;
+
+	public Instances getholdoutInstances() {
+		return holdoutInstances;
+	}
+
+	public Instances gettrainInstances() {
+		return trainInstances;
+	}
+
 	public ModifiedLogistic getClassifier() {
 		// if (null == nbClassfier)
 		// nbClassfier = new NaiveBayesParam(MetaConstants.TRAIN_FILE_PATH,
@@ -54,31 +65,38 @@ public class ClassifierProxy {
 	}
 
 	public InputData computeNewState(ModelParams params) throws Exception {
-		System.out.println("compute new state...");
-
-		getClassifier().setMaxIts(1);
-		if (null != params) {
-//			for (int i = 0; i < params.getParams().length; i++)
-//				System.out.print(params.getParams()[i] + ", ");
-//			System.out.println();
-			System.out.println("set hyper parameters...");
-			getClassifier().setHyperparameters(params.getParams());
-			getClassifier().setMaxIts(-1);
-		}
-
+//		System.out.println("compute new state...");
 		InputData dat = new InputData();
 		List<InputPredictionInstance> predInst = new ArrayList<InputPredictionInstance>();
 		ConfusionMatrix confMatrix = new ConfusionMatrix();
 
-		Instances trainInstances = WekaUtil
-				.getInstances(MetaConstants.TRAIN_FILE_PATH);
+		getClassifier().setMaxIts(-1);
+		if (null != params) {
+			// for (int i = 0; i < params.getParams().length; i++)
+			// System.out.print(params.getParams()[i] + ", ");
+			// System.out.println();
+//			System.out.println("set hyper parameters...");
+			getClassifier().setHyperparameters(params.getParams());
+			getClassifier().setMaxIts(-1);
+		} else {
+			trainInstances = WekaUtil
+					.getInstances(MetaConstants.TRAIN_FILE_PATH);
+			holdoutInstances = WekaUtil
+					.getInstances(MetaConstants.HOLDOUT_FILE_PATH);
+		}
+
+		// InputData dat = new InputData();
+		// List<InputPredictionInstance> predInst = new
+		// ArrayList<InputPredictionInstance>();
+		// ConfusionMatrix confMatrix = new ConfusionMatrix();
+		//
+		// Instances trainInstances = WekaUtil
+		// .getInstances(MetaConstants.TRAIN_FILE_PATH);
 		ModifiedLogistic ml = getClassifier();
 		ml.buildClassifier(trainInstances);
 		ModelParams modPar = new ModelParams();
 		modPar.setParams(ml.getHyperparameters());
 
-		Instances holdoutInstances = WekaUtil
-				.getInstances(MetaConstants.HOLDOUT_FILE_PATH);
 		double dist[][] = new double[holdoutInstances.numInstances()][holdoutInstances
 				.numClasses()];
 
@@ -151,10 +169,13 @@ public class ClassifierProxy {
 		double c[][] = new double[diag.length][diag.length];
 		for (int i = 0; i < diag.length; i++)
 			for (int j = 0; j < diag.length; j++)
-				if (i == j)
-					c[i][j] = diag[i];
-				else
-					c[i][j] = 0d;
+				if (i == j) {
+					c[i][j] = Math.exp(diag[i]);
+//					if (Double.isNaN(c[i][j]) || Double.isInfinite(c[i][j]))
+						System.out.print(c[i][j]+", ");
+				} else
+					c[i][j] = 1d;
+		System.out.println();
 		return c;
 	}
 
@@ -180,10 +201,5 @@ public class ClassifierProxy {
 
 	public double[] getData(int index) {
 		return getClassifier().getData(index);
-	}
-
-	public void serializeModel() {
-		
-		
 	}
 }

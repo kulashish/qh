@@ -36,6 +36,21 @@ public class HyperparameterLearner {
 		Matrix matB = new Matrix(indicator);
 		Matrix matC = new Matrix(cov);
 		Matrix matH = new Matrix(hessian);
+		for(int i = 0;i<matH.getRowDimension();i++)
+			for(int j=0;j<matH.getColumnDimension();j++)
+				if(Double.isInfinite(matH.get(i, j)) || Double.isNaN(matH.get(i, j)) )//|| matH.get(i, j)==0)
+					System.out.println("Hessian at "+i+","+j+" is Infinite/NAN!! " + matH.get(i, j));
+		
+		for(int i = 0;i<matC.getRowDimension();i++)
+			for(int j=0;j<matC.getColumnDimension();j++)
+				if(Double.isInfinite(matC.get(i, j)) || Double.isNaN(matC.get(i, j)) )//|| matC.get(i, j)==0)
+					System.out.println("Hessian at "+i+","+j+" is Infinite/NAN!! " + matC.get(i, j));
+		
+		for(int i = 0;i<matB.getRowDimension();i++)
+			for(int j=0;j<matB.getColumnDimension();j++)
+				if(Double.isInfinite(matB.get(i, j)) || Double.isNaN(matB.get(i, j)) )//|| matB.get(i, j)==0)
+					System.out.println("Hessian at "+i+","+j+" is Infinite/NAN!! " + matB.get(i, j));
+
 		System.out.println("Determinant="+matC.plus(matH).det());
 		result = matC.plus(matH).inverse().times(matB).times(-1.0d);
 		for (int i = 0; i < result.getRowDimension(); i++)

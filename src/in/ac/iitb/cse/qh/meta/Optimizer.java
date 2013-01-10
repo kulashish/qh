@@ -46,13 +46,19 @@ public class Optimizer {
 
 		@Override
 		protected double[] evaluateGradient(double[] x) throws Exception {
-			return computeGradient(x);
+			System.out.println("Computing Gradient...");
+			double[] grad =  computeGradient(x);
+			System.out.println("Gradient Computation Finished");
+			return grad;
+			
 		}
 
 		@Override
 		protected double objectiveFunction(double[] x) throws Exception {
 			getNewState(x);
-			return KLDivergenceCalculator.calculate(cState, tState);
+			double kldiv = KLDivergenceCalculator.calculate(cState, tState);
+			System.out.println("kldiv="+kldiv);
+			return kldiv;
 		}
 
 	}
@@ -115,10 +121,10 @@ public class Optimizer {
 		double temp = 0.0d;
 		HyperparameterLearner hyperLearner = new HyperparameterLearner(
 				classifier, theta);
-		System.out.println("numInstances="+numInstances);
+		//System.out.println("numInstances="+numInstances);
 
-		Instances holdoutInstances = WekaUtil
-				.getInstances(MetaConstants.HOLDOUT_FILE_PATH);
+		//Instances holdoutInstances = WekaUtil.getInstances(MetaConstants.HOLDOUT_FILE_PATH);
+		Instances holdoutInstances=classifier.getholdoutInstances();
 		int i=0;
 		for (Instance instance : holdoutInstances) {
 			double[] instDat = new double[instance.numAttributes()];
@@ -147,8 +153,8 @@ public class Optimizer {
 			i++;
 		}
 		for (i = 0; i < numWeights; i++)
-			// if (Double.isNaN(gradMatrix.get(i, 0)))
-			System.out.println(gradMatrix.get(i, 0));
+			if (Double.isNaN(gradMatrix.get(i, 0)))
+				System.out.println(gradMatrix.get(i, 0));
 		Matrix hyperJacMat = hyperLearner.computeJacobian(theta);
 		System.out.println("dimensions of hyperparam jacobian: "
 				+ hyperJacMat.getRowDimension() + " x "
@@ -163,7 +169,7 @@ public class Optimizer {
 
 		for (int p = 0; p < theta.length; p++) {
 			theta[p] = 1.0;
-			b[0][p] = -MetaConstants.MAX_POWER;
+			b[0][p] = 1.0e-8;//-MetaConstants.MAX_POWER;
 			b[1][p] = MetaConstants.MAX_POWER;
 		}
 
@@ -173,7 +179,7 @@ public class Optimizer {
 		// opt.setClassLabels(Y);
 
 		int iterCount=0;
-		
+		double minima = Double.MAX_VALUE;
 		do
 		{
 			m_MaxIts=1;
@@ -183,6 +189,11 @@ public class Optimizer {
 			theta = opt.findArgmin(theta, b);
 			if(null == theta)
 				theta = opt.getVarbValues();
+			if(minima > opt.getMinFunction())
+				minima = opt.getMinFunction();
+			//else
+				//break;
+			System.out.println("\nKL div = "+opt.getMinFunction());
 //			while (theta == null) {
 //				theta = opt.getVarbValues();
 //				if (m_Debug)
@@ -211,13 +222,10 @@ public class Optimizer {
 //			if (theta == null) // Not enough, but use the current value
 //				theta = opt.getVarbValues();
 //		}
-
-		double m_objectiveVal = -opt.getMinFunction(); // Log-likelihood
 		
 		ModelParams optimParams = null;
 		optimParams = new ModelParams();
 		optimParams.setParams(theta);
-		classifier.serializeModel();
 		return optimParams;
 	}
 
@@ -236,6 +244,7 @@ public class Optimizer {
 		double theta[] = data.getParams().getParams();
 		double newDivergence = 0.0d;
 		double initialStep = data.getInitialStepSize();
+		boolean optimized=false;
 		do {
 			delta = computeGradient(theta);
 			for (double step = initialStep; iterCount < data.getMaxIterations(); step /= 10) {
@@ -267,9 +276,10 @@ public class Optimizer {
 					theta[i] += step * delta[i];
 				getNewState(theta); // Added for checking. Not required.
 			}
-		} while (!optimized(theta) && iterCount < data.getMaxIterations());
+			optimized=optimized(theta);
+		} while (!optimized && iterCount < data.getMaxIterations());
 		ModelParams optimParams = null;
-		if (iterCount < data.getMaxIterations()) {
+		if (optimized) {
 			optimParams = new ModelParams();
 			optimParams.setParams(theta);
 		}
@@ -281,6 +291,9 @@ public class Optimizer {
 		params.setParams(theta);
 		newData = classifier.computeNewState(params);
 		cState = CurrentState.createCurrentState(newData.getPredInstances());
+		//TargetStateCalculator tstateCalc = new TargetStateCalculator(newData,
+		//		cState);
+		//tState = tstateCalc.calculate();
 	}
 
 	private boolean optimized(double[] theta) {

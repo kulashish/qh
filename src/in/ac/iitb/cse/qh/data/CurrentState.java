@@ -15,7 +15,7 @@ public class CurrentState {
 		CurrentState cstate = new CurrentState(instances.size());
 		CurrentStateVector[] cstatevectors = cstate.getP();
 		int index = 0;
-		System.out.println("Setting current state");
+//		System.out.println("Setting current state");
 		InputPredictionInstance instance = null;
 		for (int instIndex = 0; instIndex < instances.size(); instIndex++) {
 			instance = instances.get(instIndex);
