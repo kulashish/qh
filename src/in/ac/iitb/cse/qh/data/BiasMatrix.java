@@ -5,10 +5,10 @@ import in.ac.iitb.cse.qh.util.MetaConstants;
 public class BiasMatrix {
 	private int numLabels;
 	private int[][] matrix;
-	private int tp;
-	private int tn;
-	private int fp;
-	private int fn;
+	private int tp = 0;
+	private int tn = 0;
+	private int fp = 0;
+	private int fn = 0;
 
 	public BiasMatrix() {
 		this(MetaConstants.NUMBER_CLASSLABELS);

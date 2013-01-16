@@ -1,10 +1,12 @@
 package in.ac.iitb.cse.qh.data;
 
+import in.ac.iitb.cse.qh.meta.ClassifierProxy;
 import in.ac.iitb.cse.qh.meta.ConfusionMatrixLoader;
 import in.ac.iitb.cse.qh.meta.ModelParamLoader;
 import in.ac.iitb.cse.qh.meta.Optimizer;
 import in.ac.iitb.cse.qh.meta.PredictionsLoader;
 import in.ac.iitb.cse.qh.meta.TargetStateCalculator;
+import in.ac.iitb.cse.qh.util.BeanFinder;
 import in.ac.iitb.cse.qh.util.MetaConstants;
 
 import java.io.BufferedReader;
@@ -20,9 +22,34 @@ public class InputData {
 	private BiasMatrix biasMatrix;
 	private DisplayMatrix dispMatrix;
 	private ModelParams params;
+	private boolean error = false;
+
+	private ClassifierProxy proxy;
 
 	private double initialStepSize = MetaConstants.INITIAL_STEP;
 	private int maxIterations = 10;
+	private String trainFile;
+	private String holdoutFile;
+
+	public boolean isError() {
+		return error;
+	}
+
+	public String getTrainFile() {
+		return trainFile;
+	}
+
+	public void setTrainFile(String trainFile) {
+		this.trainFile = MetaConstants.UPLOAD_PATH + trainFile;
+	}
+
+	public String getHoldoutFile() {
+		return holdoutFile;
+	}
+
+	public void setHoldoutFile(String holdoutFile) {
+		this.holdoutFile = MetaConstants.UPLOAD_PATH + holdoutFile;
+	}
 
 	public double getInitialStepSize() {
 		return initialStepSize;
@@ -41,9 +68,11 @@ public class InputData {
 		this.maxIterations = maxIterations;
 	}
 
-	public DisplayMatrix getDispMatrix() {
+	public DisplayMatrix getDispMatrix() throws Exception {
 		if (null == dispMatrix)
-			loadData(MetaConstants.IN_FILE_PATH);
+			dispMatrix = new DisplayMatrix();
+		// loadData(MetaConstants.IN_FILE_PATH);
+		// loadData();
 		return dispMatrix;
 	}
 
@@ -51,9 +80,11 @@ public class InputData {
 		this.dispMatrix = dispMatrix;
 	}
 
-	public BiasMatrix getBiasMatrix() {
+	public BiasMatrix getBiasMatrix() throws Exception {
 		if (null == biasMatrix)
-			loadData(MetaConstants.IN_FILE_PATH);
+			biasMatrix = new BiasMatrix();
+		// loadData(MetaConstants.IN_FILE_PATH);
+		// loadData();
 		return biasMatrix;
 	}
 
@@ -77,14 +108,31 @@ public class InputData {
 		this.predInstances = predInstances;
 	}
 
-	public ConfusionMatrix getConfMatrix() {
+	public ConfusionMatrix getConfMatrix() throws Exception {
 		if (null == confMatrix)
-			loadData(MetaConstants.IN_FILE_PATH);
+			confMatrix = new ConfusionMatrix();
+		// loadData(MetaConstants.IN_FILE_PATH);
+		// loadData();
 		return confMatrix;
 	}
 
 	public void setConfMatrix(ConfusionMatrix confMatrix) {
 		this.confMatrix = confMatrix;
+	}
+
+	public void loadData() throws Exception {
+		error = false;
+		proxy = new ClassifierProxy();
+		InputData in = proxy.computeInitialState(trainFile, holdoutFile);
+		setConfMatrix(in.getConfMatrix());
+		setParams(in.getParams());
+		setPredInstances(in.getPredInstances());
+		setDispMatrix(confMatrix);
+		setBiasMatrix(dispMatrix);
+		MetaChartBean chart = ((MetaChartBean) BeanFinder
+				.findBean(MetaConstants.BEAN_DIVERGENCE_CHART));
+		if (null != chart)
+			chart.reset();
 	}
 
 	public boolean loadData(String inFile) {
@@ -158,8 +206,9 @@ public class InputData {
 		writer.close();
 	}
 
-	public String update() {
+	public void update() throws Exception {
 		String result = "success";
+		error = false;
 		setBiasMatrix(dispMatrix);
 		CurrentState cstate = CurrentState
 				.createCurrentState(getPredInstances());
@@ -168,18 +217,20 @@ public class InputData {
 				cstate);
 		TargetState tstate = tstateCalc.calculate();
 
-		Optimizer optimizer = new Optimizer(this, cstate, tstate, null);
+		Optimizer optimizer = new Optimizer(this, cstate, tstate, proxy);
 		ModelParams params = null;
 		try {
-			params = optimizer.optimize();
+			params = optimizer.optimize2();
 		} catch (Exception e) {
+			e.printStackTrace();
 			params = null;
 		}
-		if (null != params)
+		if (null != params) {
 			setDispMatrix(confMatrix);
-		else
-			result = "failure";
-
-		return result;
+			// result = "failure";
+			error = !params.isOptim();
+		}
+		System.out.println("ERROR: " + isError());
+		// return result;
 	}
 }

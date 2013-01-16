@@ -3,10 +3,10 @@ package in.ac.iitb.cse.qh.data;
 public class DisplayMatrix {
 
 	private int matrix[][];
-	private int tp;
-	private int fp;
-	private int fn;
-	private int tn;
+	private int tp = 0;
+	private int fp = 0;
+	private int fn = 0;
+	private int tn = 0;
 
 	public int[][] getMatrix() {
 		return matrix;
