@@ -15,13 +15,14 @@ import java.util.List;
 
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.converters.ConverterUtils.DataSource;
 
 public class ClassifierProxy {
 
-	private NaiveBayesParam nbClassfier;
+//	private NaiveBayesParam nbClassfier;
 	private ModifiedLogistic mlrClassifier;
 
+	private String tPath;
+	private String hPath;
 	private Instances trainInstances;
 	private Instances holdoutInstances;
 
@@ -53,7 +54,9 @@ public class ClassifierProxy {
 	// }
 	//
 
-	public InputData computeInitialState() throws Exception {
+	public InputData computeInitialState(String train, String hold) throws Exception {
+		tPath = train;
+		hPath = hold;
 		mlrClassifier = null;
 		InputData in = computeNewState(null);
 		try {
@@ -80,18 +83,11 @@ public class ClassifierProxy {
 			getClassifier().setMaxIts(-1);
 		} else {
 			trainInstances = WekaUtil
-					.getInstances(MetaConstants.TRAIN_FILE_PATH);
+					.getInstances(tPath);
 			holdoutInstances = WekaUtil
-					.getInstances(MetaConstants.HOLDOUT_FILE_PATH);
+					.getInstances(hPath);
 		}
 
-		// InputData dat = new InputData();
-		// List<InputPredictionInstance> predInst = new
-		// ArrayList<InputPredictionInstance>();
-		// ConfusionMatrix confMatrix = new ConfusionMatrix();
-		//
-		// Instances trainInstances = WekaUtil
-		// .getInstances(MetaConstants.TRAIN_FILE_PATH);
 		ModifiedLogistic ml = getClassifier();
 		ml.buildClassifier(trainInstances);
 		ModelParams modPar = new ModelParams();

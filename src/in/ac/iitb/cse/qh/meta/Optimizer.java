@@ -4,12 +4,13 @@ import in.ac.iitb.cse.qh.data.ConfusionMatrix;
 import in.ac.iitb.cse.qh.data.CurrentState;
 import in.ac.iitb.cse.qh.data.CurrentStateVector;
 import in.ac.iitb.cse.qh.data.InputData;
+import in.ac.iitb.cse.qh.data.MetaChartBean;
 import in.ac.iitb.cse.qh.data.ModelParams;
 import in.ac.iitb.cse.qh.data.TargetState;
 import in.ac.iitb.cse.qh.data.TargetStateVector;
+import in.ac.iitb.cse.qh.util.BeanFinder;
 import in.ac.iitb.cse.qh.util.KLDivergenceCalculator;
 import in.ac.iitb.cse.qh.util.MetaConstants;
-import in.ac.iitb.cse.qh.util.WekaUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -17,8 +18,6 @@ import java.util.Arrays;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Optimization;
-import weka.core.Utils;
-
 import Jama.Matrix;
 
 public class Optimizer {
@@ -35,7 +34,7 @@ public class Optimizer {
 	protected boolean m_Debug;
 
 	private int m_MaxIts = -1;
-	
+
 	private class OptEng extends Optimization {
 
 		@Override
@@ -47,20 +46,19 @@ public class Optimizer {
 		@Override
 		protected double[] evaluateGradient(double[] x) throws Exception {
 			System.out.println("Computing Gradient...");
-			double[] grad =  computeGradient(x);
+			double[] grad = computeGradient(x);
 			System.out.println("Gradient Computation Finished");
 			return grad;
-			
+
 		}
 
 		@Override
 		protected double objectiveFunction(double[] x) throws Exception {
 			getNewState(x);
 			double kldiv = KLDivergenceCalculator.calculate(cState, tState);
-			System.out.println("kldiv="+kldiv);
+			System.out.println("kldiv=" + kldiv);
 			return kldiv;
 		}
-
 	}
 
 	public Optimizer(InputData in, CurrentState curr, TargetState target,
@@ -76,37 +74,6 @@ public class Optimizer {
 		// .getParams());
 	}
 
-	// public double[] computeGradient(double[] theta) {
-	// double beta = MetaConstants.SCALING_BETA;
-	// ClassifierProxy classifier = new ClassifierProxy();
-	// int numInstances = cState.getTrainingSize();
-	// CurrentStateVector[] cStateVectors = cState.getP();
-	// TargetStateVector[] tStateVectors = tState.getS();
-	// System.out.println("Target state vectors : " + tStateVectors);
-	// double[][] jacobian = null;
-	// Matrix jacMatrix = null;
-	// Matrix curVector = null;
-	// Matrix tarVector = null;
-	// Matrix idenMatrix = null;
-	// Matrix oneVector = new Matrix(numLabels, 1, 1.0d); // M x 1
-	//
-	// Matrix gradMatrix = new Matrix(theta.length, 1); // D x 1
-	// for (int i = 0; i < numInstances; i++) {
-	// jacobian = classifier.computeJacobian(i, theta);
-	// jacMatrix = new Matrix(jacobian); // M x D
-	// curVector = new Matrix(cStateVectors[i].getPi(), 1); // M x 1
-	// tarVector = new Matrix(tStateVectors[i].getSi(), 1); // M x 1
-	// idenMatrix = Matrix.identity(numLabels, numLabels); // M x M
-	//
-	// gradMatrix.plusEquals(jacMatrix
-	// .transpose()
-	// .times(idenMatrix.minus(curVector.transpose().times(
-	// oneVector.transpose())))
-	// .times(tarVector.transpose()));
-	// }
-	// return gradMatrix.times(-beta).getRowPackedCopy();
-	// }
-
 	public double[] computeGradient(double[] theta) throws Exception {
 		int numInstances = cState.getTrainingSize();
 		CurrentStateVector[] cStateVectors = cState.getP();
@@ -121,25 +88,26 @@ public class Optimizer {
 		double temp = 0.0d;
 		HyperparameterLearner hyperLearner = new HyperparameterLearner(
 				classifier, theta);
-		//System.out.println("numInstances="+numInstances);
+		// System.out.println("numInstances="+numInstances);
 
-		//Instances holdoutInstances = WekaUtil.getInstances(MetaConstants.HOLDOUT_FILE_PATH);
-		Instances holdoutInstances=classifier.getholdoutInstances();
-		int i=0;
+		// Instances holdoutInstances =
+		// WekaUtil.getInstances(MetaConstants.HOLDOUT_FILE_PATH);
+		Instances holdoutInstances = classifier.getholdoutInstances();
+		int i = 0;
 		for (Instance instance : holdoutInstances) {
 			double[] instDat = new double[instance.numAttributes()];
 			int j = 1;
 			instDat[0] = 1;
-			for (int k = 0; k < instance.numAttributes()-1; k++) {
+			for (int k = 0; k < instance.numAttributes() - 1; k++) {
 				instDat[j++] = instance.value(k);
 			}
 
 			dataMat = new Matrix(instDat, 1);
-			
-		////for (int i = 0; i < numInstances; i++) {
+
+			// //for (int i = 0; i < numInstances; i++) {
 			// jacobian = classifier.computeJacobian(i); // D x M
 			// jacMatrix = new Matrix(jacobian);
-			////dataMat = new Matrix(classifier.getData(i), 1);
+			// //dataMat = new Matrix(classifier.getData(i), 1);
 			// System.out.println("data matrix dimensions: "
 			// + dataMat.getRowDimension() + " x "
 			// + dataMat.getColumnDimension());
@@ -164,12 +132,13 @@ public class Optimizer {
 
 	public ModelParams optimize2() throws Exception {
 		// Initialize
+		boolean optim = false;
 		double theta[] = data.getParams().getParams();
 		double[][] b = new double[2][theta.length]; // Boundary constraints, N/A
 
 		for (int p = 0; p < theta.length; p++) {
 			theta[p] = 1.0;
-			b[0][p] = 1.0e-8;//-MetaConstants.MAX_POWER;
+			b[0][p] = 1.0e-8;// -MetaConstants.MAX_POWER;
 			b[1][p] = MetaConstants.MAX_POWER;
 		}
 
@@ -178,53 +147,34 @@ public class Optimizer {
 		// opt.setWeights(weights);
 		// opt.setClassLabels(Y);
 
-		int iterCount=0;
+		int iterCount = 0;
 		double minima = Double.MAX_VALUE;
-		do
-		{
-			m_MaxIts=1;
+		do {
+			m_MaxIts = 1;
 			opt.setMaxIteration(m_MaxIts);
 			iterCount++;
-			System.out.println("\nRunning hyperparameterLearning iteration count="+iterCount);
+			System.out
+					.println("\nRunning hyperparameterLearning iteration count="
+							+ iterCount);
 			theta = opt.findArgmin(theta, b);
-			if(null == theta)
+			if (null == theta)
 				theta = opt.getVarbValues();
-			if(minima > opt.getMinFunction())
+			if (minima > opt.getMinFunction())
 				minima = opt.getMinFunction();
-			//else
-				//break;
-			System.out.println("\nKL div = "+opt.getMinFunction());
-//			while (theta == null) {
-//				theta = opt.getVarbValues();
-//				if (m_Debug)
-//					System.out.println("200 iterations finished, not enough!");
-//				iterCount++;
-//				System.out.println("Running hyperparameterLearning iteration count="+iterCount);
-//				theta = opt.findArgmin(theta, b);
-//			}
-		}while(!optimized(theta) && iterCount < data.getMaxIterations());
-		
-//		if (m_MaxIts == -1) { // Search until convergence
-//			theta = opt.findArgmin(theta, b);
-//			while (theta == null) {
-//				theta = opt.getVarbValues();
-//				if (m_Debug)
-//					System.out.println("200 iterations finished, not enough!");
-//				theta = opt.findArgmin(theta, b);
-//				//if(optimized(theta))
-//					//break;
-//			}
-//			if (m_Debug)
-//				System.out.println(" -------------<Converged>--------------");
-//		} else {
-//			opt.setMaxIteration(m_MaxIts);
-//			theta = opt.findArgmin(theta, b);
-//			if (theta == null) // Not enough, but use the current value
-//				theta = opt.getVarbValues();
-//		}
-		
-		ModelParams optimParams = null;
-		optimParams = new ModelParams();
+			// else
+			// break;
+			System.out.println("\nKL div = " + opt.getMinFunction());
+			MetaChartBean chart = (MetaChartBean) BeanFinder
+					.findBean(MetaConstants.BEAN_DIVERGENCE_CHART);
+			System.out.println("Found chart object : " + chart);
+			if (null != chart)
+				chart.addData(opt.getMinFunction());
+			optim = optimized(theta);
+		} while (!optim && iterCount < data.getMaxIterations());
+
+		System.out.println("OPTIMIZED: " + optim);
+		ModelParams optimParams = new ModelParams();
+		optimParams.setOptim(optim);
 		optimParams.setParams(theta);
 		return optimParams;
 	}
@@ -232,7 +182,7 @@ public class Optimizer {
 	// 2nd iteration should always be robust.
 	// have lot more examples for testing.
 	// training on larger data set.
-	
+
 	public ModelParams optimize() throws Exception {
 		int iterCount = 0;
 		divergence = KLDivergenceCalculator.calculate(cState, tState);
@@ -244,7 +194,7 @@ public class Optimizer {
 		double theta[] = data.getParams().getParams();
 		double newDivergence = 0.0d;
 		double initialStep = data.getInitialStepSize();
-		boolean optimized=false;
+		boolean optimized = false;
 		do {
 			delta = computeGradient(theta);
 			for (double step = initialStep; iterCount < data.getMaxIterations(); step /= 10) {
@@ -276,7 +226,7 @@ public class Optimizer {
 					theta[i] += step * delta[i];
 				getNewState(theta); // Added for checking. Not required.
 			}
-			optimized=optimized(theta);
+			optimized = optimized(theta);
 		} while (!optimized && iterCount < data.getMaxIterations());
 		ModelParams optimParams = null;
 		if (optimized) {
@@ -291,18 +241,12 @@ public class Optimizer {
 		params.setParams(theta);
 		newData = classifier.computeNewState(params);
 		cState = CurrentState.createCurrentState(newData.getPredInstances());
-		//TargetStateCalculator tstateCalc = new TargetStateCalculator(newData,
-		//		cState);
-		//tState = tstateCalc.calculate();
+		// TargetStateCalculator tstateCalc = new TargetStateCalculator(newData,
+		// cState);
+		// tState = tstateCalc.calculate();
 	}
 
-	private boolean optimized(double[] theta) {
-		// ModelParams params = new ModelParams();
-		// params.setParams(theta);
-		// InputData newData = new ClassifierProxy().computeNewState(params);
-		// cState = CurrentState.createCurrentState(newData.getPredInstances());
-		// System.out.println("KL Divergence : "
-		// + KLDivergenceCalculator.calculate(cState, tState));
+	private boolean optimized(double[] theta) throws Exception {
 		ConfusionMatrix newConf = newData.getConfMatrix();
 		newConf.display();
 		int[][] nc = newConf.getMatrix();

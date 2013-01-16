@@ -1,7 +1,5 @@
 package in.ac.iitb.cse.qh.test;
 
-import cc.mallet.types.FeatureConjunction.List;
-import java.util.Date;
 import in.ac.iitb.cse.qh.data.BiasMatrix;
 import in.ac.iitb.cse.qh.data.CurrentState;
 import in.ac.iitb.cse.qh.data.CurrentStateVector;
@@ -15,11 +13,13 @@ import in.ac.iitb.cse.qh.meta.TargetStateCalculator;
 import in.ac.iitb.cse.qh.util.KLDivergenceCalculator;
 import in.ac.iitb.cse.qh.util.MetaConstants;
 
+import java.util.Date;
+
 public class MetaClassifierTester {
 
 	public static void main(String[] args) {
 		Date date = new Date();
-		long start=date.getTime();
+		long start = date.getTime();
 		MetaClassifierTester tester = new MetaClassifierTester();
 		// InputData in = new InputData();
 		System.out.println("Loading Input data");
@@ -28,7 +28,8 @@ public class MetaClassifierTester {
 		ClassifierProxy proxy = new ClassifierProxy();
 		try {
 			System.out.println("classifier proxy instance : " + proxy);
-			in = proxy.computeInitialState();
+			in = proxy.computeInitialState(MetaConstants.TRAIN_FILE_PATH,
+					MetaConstants.HOLDOUT_FILE_PATH);
 			java.util.List<InputPredictionInstance> insts = in
 					.getPredInstances();
 			double[] y = null;
@@ -39,14 +40,12 @@ public class MetaClassifierTester {
 			//
 			CurrentState cstate = CurrentState.createCurrentState(in
 					.getPredInstances());
-			
-			int i=0;
-			for(CurrentStateVector cs : cstate.getP())
-			{
-				if(cs.getPi()[0] == 0)
-				{
-					System.out.println("i = "+i);
-					System.out.println("p0 = "+cs.getPi()[0]);
+
+			int i = 0;
+			for (CurrentStateVector cs : cstate.getP()) {
+				if (cs.getPi()[0] == 0) {
+					System.out.println("i = " + i);
+					System.out.println("p0 = " + cs.getPi()[0]);
 				}
 				if(cs.getPi()[1] == 0)
 				{

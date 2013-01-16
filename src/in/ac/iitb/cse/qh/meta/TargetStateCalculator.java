@@ -18,7 +18,7 @@ public class TargetStateCalculator {
 	private int numLabels;
 	private CurrentStateVector[] cStateVectors;
 
-	public TargetStateCalculator(InputData data, CurrentState currentState) {
+	public TargetStateCalculator(InputData data, CurrentState currentState) throws Exception {
 		size = data.getPredInstances().size();
 		inputInstances = (InputPredictionInstance[]) data.getPredInstances()
 				.toArray(new InputPredictionInstance[size]);
