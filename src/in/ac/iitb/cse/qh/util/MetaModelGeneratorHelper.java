@@ -21,7 +21,7 @@ public class MetaModelGeneratorHelper {
 
 	public static double[] readWeightsFromFile(String filePath, int n)
 			throws IOException {
-		return readWeightsFromFile(filePath, n, 1)[0];
+		return readWeightsFromFile(filePath, n + 1, 1)[0];
 	}
 
 	private static double[] parseWeights(String line) {
