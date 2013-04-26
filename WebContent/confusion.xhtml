@@ -30,7 +30,7 @@
 	<f:view>
 		<h2>
 			<h:outputText id="error" rendered="#{inputdata.error}"
-				value="Could not optimize parameters for this configuration" />
+				value="#{inputdata.errorLog}" />
 		</h2>
 		<h:panelGrid id="matrix" columns="2"
 			columnClasses="colStyle2, colStyle2" border="1">
@@ -103,8 +103,8 @@
 				<br />
 				<br />
 				<p:commandButton value="Update" action="#{inputdata.loadData}"
-					style="font-size: 16px; horizontal-align: center;" update=":matrix :error"
-					onclick="disable();" />
+					style="font-size: 16px; horizontal-align: center;"
+					update=":matrix :error" onclick="disable();" />
 			</h:form>
 			<p:layoutUnit id="chartlayout" position="center">
 				<p:growl id="growl" showDetail="true" />
@@ -113,7 +113,7 @@
 						autoStart="true" />
 				</h:form>
 				<p:panelGrid columns="1" id="chartPanel">
-					<p:lineChart xaxisLabel="Iteration" yaxisLabel="Divergence"
+					<p:lineChart xaxisLabel="Iteration" yaxisLabel="False Positives"
 						minX="0" value="#{metachart.model}" legendPosition="nw"
 						update="info" style="height:350px;width: 660px;">
 						<p:ajax event="itemSelect" listener="#{metachart.itemSelect}"
