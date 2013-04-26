@@ -164,14 +164,18 @@ public class Optimizer {
 			// else
 			// break;
 			System.out.println("\nKL div = " + opt.getMinFunction());
+			System.out.println("\nKL div minima= "+minima);
+//			curIterations++;
 			MetaChartBean chart = (MetaChartBean) BeanFinder
 					.findBean(MetaConstants.BEAN_DIVERGENCE_CHART);
-			System.out.println("Found chart object : " + chart);
+//			System.out.println("Found chart object : " + chart);
 			if (null != chart)
-				chart.addData(opt.getMinFunction());
+//				chart.addData(opt.getMinFunction());
+				chart.addData(newData.getConfMatrix().getFp());
 			optim = optimized(theta);
+			System.out.println("\noptim = " + optim);
 		} while (!optim && iterCount < data.getMaxIterations());
-
+		
 		System.out.println("OPTIMIZED: " + optim);
 		ModelParams optimParams = new ModelParams();
 		optimParams.setOptim(optim);

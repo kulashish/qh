@@ -92,6 +92,7 @@ public class ClassifierProxy {
 		ml.buildClassifier(trainInstances);
 		ModelParams modPar = new ModelParams();
 		modPar.setParams(ml.getHyperparameters());
+		modPar.setWParams(ml.getWparameters());
 
 		double dist[][] = new double[holdoutInstances.numInstances()][holdoutInstances
 				.numClasses()];

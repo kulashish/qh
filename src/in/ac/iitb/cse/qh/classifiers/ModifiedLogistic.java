@@ -200,6 +200,10 @@ public class ModifiedLogistic extends Logistic {
 
 	}
 
+	public void setNumberofAttributes(int num) {
+		m_NumPredictors = num;
+	}
+
 	public double[] getWeights() {
 		// return x;
 		return params;
@@ -234,7 +238,7 @@ public class ModifiedLogistic extends Logistic {
 		double[][] hessian = new double[x.length][x.length];
 
 		System.out.println("Hessian calculation started...");
-		
+
 		for (int i = 0; i < x.length; i++) {
 			for (int j = 0; j < x.length; j++) {
 				hessian[i][j] = 0d;
@@ -243,15 +247,15 @@ public class ModifiedLogistic extends Logistic {
 					for (int l = 0; l < m_Data[k].length; l++) {
 						temp += x[l] * m_Data[k][l];
 					}
-					if(temp > MetaConstants.MAX_POWER)
+					if (temp > MetaConstants.MAX_POWER)
 						temp = MetaConstants.MAX_POWER;
-					if(temp < -MetaConstants.MAX_POWER)
+					if (temp < -MetaConstants.MAX_POWER)
 						temp = -MetaConstants.MAX_POWER;
 					temp = Math.exp(-temp);
 					temp = (-temp) / ((1 + temp) * (1 + temp));
 
-					//if(temp == 0)
-						//System.out.println("\ntemp="+temp);
+					// if(temp == 0)
+					// System.out.println("\ntemp="+temp);
 					hessian[i][j] += m_Data[k][i] * m_Data[k][j] * temp;
 				}
 				hessian[i][j] = -hessian[i][j];
@@ -259,7 +263,7 @@ public class ModifiedLogistic extends Logistic {
 		}
 
 		System.out.println("Hessian calculation finished!");
-		
+
 		return hessian;
 	}
 
@@ -272,11 +276,11 @@ public class ModifiedLogistic extends Logistic {
 				if (i != j)
 					B[i][j] = 0;
 				else {
-					//System.out.println("x: " + x[i] + " d: " + d[j]);
-					if(d[j] > MetaConstants.MAX_POWER)
-						d[j]=MetaConstants.MAX_POWER;
-					if(d[j] < -MetaConstants.MAX_POWER)
-						d[j]=-MetaConstants.MAX_POWER;
+					// System.out.println("x: " + x[i] + " d: " + d[j]);
+					if (d[j] > MetaConstants.MAX_POWER)
+						d[j] = MetaConstants.MAX_POWER;
+					if (d[j] < -MetaConstants.MAX_POWER)
+						d[j] = -MetaConstants.MAX_POWER;
 					B[i][j] = x[i] * Math.exp(d[j]);
 				}
 			}
@@ -358,8 +362,8 @@ public class ModifiedLogistic extends Logistic {
 
 		m_ReplaceMissingValues.input(instance);
 		instance = m_ReplaceMissingValues.output();
-//		m_AttFilter.input(instance);
-//		instance = m_AttFilter.output();
+		// m_AttFilter.input(instance);
+		// instance = m_AttFilter.output();
 		m_NominalToBinary.input(instance);
 		instance = m_NominalToBinary.output();
 
@@ -409,8 +413,8 @@ public class ModifiedLogistic extends Logistic {
 			for (int n = 0; n < m_NumClasses - 1; n++)
 				sum += Math.exp(v[n] - v[m]);
 			prob[m] = 1 / (sum + Math.exp(-v[m]));
-			if(prob[m] == 0)
-				prob[m]=1.0e-20;
+			if (prob[m] == 0)
+				prob[m] = 1.0e-20;
 		}
 
 		return prob;
@@ -422,6 +426,14 @@ public class ModifiedLogistic extends Logistic {
 
 	public double[] getHyperparameters() {
 		return d;
+	}
+
+	public void setWparameters(double[] argw) {
+		params = argw;
+	}
+
+	public double[] getWparameters() {
+		return params;
 	}
 
 	@Override
@@ -437,9 +449,9 @@ public class ModifiedLogistic extends Logistic {
 		train = Filter.useFilter(train, m_ReplaceMissingValues);
 
 		// Remove useless attributes
-//		m_AttFilter = new RemoveUseless();
-//		m_AttFilter.setInputFormat(train);
-//		train = Filter.useFilter(train, m_AttFilter);
+		// m_AttFilter = new RemoveUseless();
+		// m_AttFilter.setInputFormat(train);
+		// train = Filter.useFilter(train, m_AttFilter);
 
 		// Transform attributes
 		m_NominalToBinary = new NominalToBinary();
@@ -533,9 +545,9 @@ public class ModifiedLogistic extends Logistic {
 			System.out.println("No hyperparameters... assuming default");
 			d = new double[nR + 1];
 			for (int i = 0; i <= nR; i++)
-//				d[i] = 1.0e-8d;
-//			 d[i] = 10.0d;
-			 d[i] = 1.0d;
+				// d[i] = 1.0e-8d;
+				// d[i] = 10.0d;
+				d[i] = 1.0d;
 		}
 		double x[] = new double[(nR + 1) * nK];
 		double[][] b = new double[2][x.length]; // Boundary constraints, N/A
@@ -555,6 +567,12 @@ public class ModifiedLogistic extends Logistic {
 			}
 		}
 
+		// Warm Start
+		// if (null != params)
+		// for (int q = 1; q <= nR; q++) {
+		// x[q] = params[q];
+		// }
+
 		OptEng opt = new OptEng();
 		opt.setDebug(m_Debug);
 		opt.setWeights(weights);
@@ -562,25 +580,25 @@ public class ModifiedLogistic extends Logistic {
 
 		// System.out.println();
 
-		//int trainIterations=0;
+		// int trainIterations=0;
 		if (m_MaxIts == -1) { // Search until convergence
-			//trainIterations++;
-			//System.out.println("\nRunning trainIterations="+trainIterations);
+			// trainIterations++;
+			// System.out.println("\nRunning trainIterations="+trainIterations);
 			x = opt.findArgmin(x, b);
 			while (x == null) {
 				x = opt.getVarbValues();
 				if (m_Debug)
 					System.out.println("200 iterations finished, not enough!");
-				//trainIterations++;
-				//System.out.println("Running trainIterations="+trainIterations);
+				// trainIterations++;
+				// System.out.println("Running trainIterations="+trainIterations);
 				x = opt.findArgmin(x, b);
 			}
 			if (m_Debug)
 				System.out.println(" -------------<Converged>--------------");
 		} else {
 			opt.setMaxIteration(m_MaxIts);
-			//trainIterations++;
-			//System.out.println("Running trainIterations="+trainIterations);
+			// trainIterations++;
+			// System.out.println("Running trainIterations="+trainIterations);
 			x = opt.findArgmin(x, b);
 			if (x == null) // Not enough, but use the current value
 				x = opt.getVarbValues();
@@ -626,14 +644,12 @@ public class ModifiedLogistic extends Logistic {
 		return m_Data[index];
 	}
 
-	public void setMaxIts(int it)
-	{
-		m_MaxIts=it;
+	public void setMaxIts(int it) {
+		m_MaxIts = it;
 	}
-	
-	public int getMaxIts()
-	{
+
+	public int getMaxIts() {
 		return m_MaxIts;
 	}
-	
+
 }

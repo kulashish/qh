@@ -2,6 +2,7 @@ package in.ac.iitb.cse.qh.data;
 
 import in.ac.iitb.cse.qh.meta.ClassifierProxy;
 import in.ac.iitb.cse.qh.meta.ConfusionMatrixLoader;
+import in.ac.iitb.cse.qh.meta.MetaModelGenerator;
 import in.ac.iitb.cse.qh.meta.ModelParamLoader;
 import in.ac.iitb.cse.qh.meta.Optimizer;
 import in.ac.iitb.cse.qh.meta.PredictionsLoader;
@@ -23,13 +24,18 @@ public class InputData {
 	private DisplayMatrix dispMatrix;
 	private ModelParams params;
 	private boolean error = false;
+	private String errorLog;
 
 	private ClassifierProxy proxy;
 
 	private double initialStepSize = MetaConstants.INITIAL_STEP;
-	private int maxIterations = 10;
+	private int maxIterations = MetaConstants.MAX_OPTIM_ITERATIONS;
 	private String trainFile;
 	private String holdoutFile;
+
+	public String getErrorLog() {
+		return errorLog;
+	}
 
 	public boolean isError() {
 		return error;
@@ -120,15 +126,24 @@ public class InputData {
 		this.confMatrix = confMatrix;
 	}
 
-	public void loadData() throws Exception {
-		error = false;
+	public void loadData() {
 		proxy = new ClassifierProxy();
-		InputData in = proxy.computeInitialState(trainFile, holdoutFile);
-		setConfMatrix(in.getConfMatrix());
-		setParams(in.getParams());
-		setPredInstances(in.getPredInstances());
-		setDispMatrix(confMatrix);
-		setBiasMatrix(dispMatrix);
+		InputData in = null;
+		try {
+			in = proxy.computeInitialState(trainFile, holdoutFile);
+			setConfMatrix(in.getConfMatrix());
+			setParams(in.getParams());
+			setPredInstances(in.getPredInstances());
+			setDispMatrix(confMatrix);
+			setBiasMatrix(dispMatrix);
+		} catch (Exception e) {
+			error = true;
+			errorLog = null != e.getCause() ? e.getCause().getMessage() : e
+					.getMessage();
+			if(null==errorLog || "".equalsIgnoreCase(errorLog))
+				errorLog = "Error loading data. Please check the server logs for error.";
+		}
+
 		MetaChartBean chart = ((MetaChartBean) BeanFinder
 				.findBean(MetaConstants.BEAN_DIVERGENCE_CHART));
 		if (null != chart)
@@ -207,8 +222,6 @@ public class InputData {
 	}
 
 	public void update() throws Exception {
-		String result = "success";
-		error = false;
 		setBiasMatrix(dispMatrix);
 		CurrentState cstate = CurrentState
 				.createCurrentState(getPredInstances());
@@ -227,10 +240,13 @@ public class InputData {
 		}
 		if (null != params) {
 			setDispMatrix(confMatrix);
-			// result = "failure";
+			String filename = MetaConstants.MODEL_DOWNLOAD_PATH + "optim_"
+					+ System.currentTimeMillis();
+			new MetaModelGenerator().serializeModel(proxy.getClassifier(),
+					filename + ".model", filename + ".params");
 			error = !params.isOptim();
 		}
-		System.out.println("ERROR: " + isError());
-		// return result;
+		if (null == params || error)
+			errorLog = "Could not optimize parameters for this configuration";
 	}
 }

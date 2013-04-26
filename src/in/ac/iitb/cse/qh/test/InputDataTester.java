@@ -11,7 +11,7 @@ public class InputDataTester {
 
 		System.out.println("Loading data");
 		InputData data = new InputData();
-		data.loadData("/home/ashish/nb.dat");
+//		data.loadData("/home/ashish/nb.dat");
 		System.out.println("Done loading");
 		// data.serialize("/home/ashish/test.dat");
 

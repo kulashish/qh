@@ -16,7 +16,7 @@ public class MetaChartBean {
 	public MetaChartBean() {
 		model = new CartesianChartModel();
 		data = new ChartSeries();
-		data.setLabel("Divergence");
+		data.setLabel("False Positives");
 		iteration = 0;
 		// int i = 0;
 		// data.set(i++, 135);
